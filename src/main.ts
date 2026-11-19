@@ -2,11 +2,52 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
-import { mkdirSync } from 'fs';
+import { cpSync, existsSync, mkdirSync, readdirSync } from 'fs';
 import { AppModule } from './app.module';
 
+function initStorage() {
+  const dataDir = join(process.cwd(), 'data');
+  const mediaDir = join(dataDir, 'media');
+  const defaultsDir = join(process.cwd(), 'defaults');
+
+  mkdirSync(mediaDir, { recursive: true });
+
+  if (existsSync(defaultsDir)) {
+    const defaultXml = join(defaultsDir, 'PRAMITHA.XML');
+    const targetXml = join(dataDir, 'PRAMITHA.XML');
+    if (existsSync(defaultXml) && !existsSync(targetXml)) {
+      try {
+        cpSync(defaultXml, targetXml);
+      } catch (e) {
+        console.error('Gagal menyalin PRAMITHA.XML default:', e);
+      }
+    }
+
+    const defaultChannel = join(defaultsDir, 'channel.json');
+    const targetChannel = join(dataDir, 'channel.json');
+    if (existsSync(defaultChannel) && !existsSync(targetChannel)) {
+      try {
+        cpSync(defaultChannel, targetChannel);
+      } catch (e) {
+        console.error('Gagal menyalin channel.json default:', e);
+      }
+    }
+
+    const defaultMedia = join(defaultsDir, 'media');
+    if (existsSync(defaultMedia)) {
+      try {
+        if (readdirSync(mediaDir).length === 0) {
+          cpSync(defaultMedia, mediaDir, { recursive: true });
+        }
+      } catch (e) {
+        console.error('Gagal menyalin media default:', e);
+      }
+    }
+  }
+}
+
 async function bootstrap() {
-  mkdirSync(join(process.cwd(), 'data', 'media'), { recursive: true });
+  initStorage();
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.enableCors();
   app.useStaticAssets(join(process.cwd(), 'public'));

@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<channel name="PRAMITHA">
+  <program name="PRAMITHA" mode="sequence" desc="SIGNAGE ANTRIAN" template="T1" w="1920" h="1080" duration="00:00:00">
+    <block x="0" y="0" w="1920" h="1080"/>
+    <block id="BackGround" x="0" y="0" w="1920" h="1080">
+      <bgimage duration="00:00:00" url="PRAMITHA\PRAMITHA\BG.jpg" url_modal="PRAMITHA\PRAMITHA\"/>
+    </block>
+    <block id="DateTime" x="1562" y="994" w="347" h="79">
+      <datetime duration="00:00:00" url="PRAMITHA\PRAMITHA\T64_T_22.jpg" url_modal="PRAMITHA\PRAMITHA\" font="Century Gothic" size="20" style="[Bold]" color="#FFFFFF" font_color="#FFFFFF" aligment_font="taRightJustify" layout_font="tlCenter" left="5" top="40" width="152" height="40" formatdatetime="dd-mm-yyyy" font_2="Traffic 05" size_2="36" style_2="[]" color_2="#FFFFFF" font_color_2="#FFFFFF" aligment_font_2="taLeftJustify" layout_font_2="tlCenter" left_2="172" top_2="10" width_2="162" height_2="60" formatdatetime_2="hh:nn" font_3="Century Gothic" size_3="18" style_3="[Bold]" color_3="#FFFFFF" font_color_3="#FFFFFF" aligment_font_3="taRightJustify" layout_font_3="tlCenter" left_3="80" top_3="0" width_3="72" height_3="50" formatdatetime_3="dddd"/>
+    </block>
+    <block id="RText" x="0" y="1011" w="1551" h="67">
+      <newsticker duration="00:00:00" font="Century Gothic" size="36" style="[]" color="#FFFFFF" bg_color="#16191E" speed="0">
+        <item text="Selamat Datang di PRAMITA LAB Surabaya"/>
+      </newsticker>
+    </block>
+    <block id="Video" x="628" y="155" w="1274" h="622">
+      <image duration="00:00:15" url="PRAMITHA\PRAMITHA\full HD cerviks.jpg" url_modal="PRAMITHA\PRAMITHA\"/>
+      <image duration="00:00:15" url="PRAMITHA\PRAMITHA\full HD MCU.jpg" url_modal="PRAMITHA\PRAMITHA\"/>
+      <image duration="00:00:15" url="PRAMITHA\PRAMITHA\full HD nipt.jpg" url_modal="PRAMITHA\PRAMITHA\"/>
+      <image duration="00:00:15" url="PRAMITHA\PRAMITHA\full HD PPAP.jpg" url_modal="PRAMITHA\PRAMITHA\"/>
+      <image duration="00:00:15" url="PRAMITHA\PRAMITHA\full HD Preeklamsia.jpg" url_modal="PRAMITHA\PRAMITHA\"/>
+      <image duration="00:00:15" url="PRAMITHA\PRAMITHA\full HD sindrom metabolik.jpg" url_modal="PRAMITHA\PRAMITHA\"/>
+      <image duration="00:00:15" url="PRAMITHA\PRAMITHA\full HD torch.jpg" url_modal="PRAMITHA\PRAMITHA\"/>
+    </block>
+    <block id="Antrian1" x="5" y="9" w="597" h="190">
+      <queueview duration="00:00:00" url="PRAMITHA\PRAMITHA\T64_T_03.jpg" url_modal="PRAMITHA\PRAMITHA\" font="Traffic 05" size="72" style="[]" color="#FFFFFF" font_color="#FF0000" aligment_font="taLeftJustify" layout_font="tlCenter" udp_port="3333" hide_info="1" service="1" counter="" group="" group_remaining="" text_service_id="UMUM" text_counter_id="1" queue_n_top="55" queue_n_left="300" queue_n_width="277" queue_n_height="124" font_a="Traffic 05" size_a="72" style_a="[]" color_a="#FFFFFF" queue_a_top="53" queue_a_left="208" queue_a_width="85" queue_a_height="124" aligment_font_a="taCenter" layout_font_a="tlCenter" font_color_a="#800000" active_a="-1" font_s="Century Gothic" size_s="22" style_s="[Bold]" color_s="#FFFFFF" queue_s_top="5" queue_s_left="210" queue_s_width="365" queue_s_height="37" aligment_font_s="taCenter" layout_font_s="tlCenter" font_color_s="#FFFFFF" active_s="0" font_c="Traffic 05" size_c="72" style_c="[]" color_c="#FFFFFF" queue_c_top="53" queue_c_left="15" queue_c_width="150" queue_c_height="124" aligment_font_c="taCenter" layout_font_c="tlCenter" font_color_c="#FFFFFF" active_c="-1"/>
+    </block>
+    <block id="Antrian2" x="5" y="203" w="597" h="190">
+      <queueview duration="00:00:00" url="PRAMITHA\PRAMITHA\T64_T_03.jpg" url_modal="PRAMITHA\PRAMITHA\" font="Traffic 05" size="72" style="[]" color="#FFFFFF" font_color="#FF0000" aligment_font="taLeftJustify" layout_font="tlCenter" udp_port="3333" hide_info="1" service="2" counter="" group="" group_remaining="" text_service_id="PERUSAHAAN" text_counter_id="2" queue_n_top="55" queue_n_left="300" queue_n_width="277" queue_n_height="124" font_a="Traffic 05" size_a="72" style_a="[]" color_a="#FFFFFF" queue_a_top="53" queue_a_left="208" queue_a_width="85" queue_a_height="124" aligment_font_a="taCenter" layout_font_a="tlCenter" font_color_a="#800000" active_a="-1" font_s="Century Gothic" size_s="22" style_s="[Bold]" color_s="#FFFFFF" queue_s_top="5" queue_s_left="210" queue_s_width="365" queue_s_height="37" aligment_font_s="taCenter" layout_font_s="tlCenter" font_color_s="#FFFFFF" active_s="0" font_c="Traffic 05" size_c="72" style_c="[]" color_c="#FFFFFF" queue_c_top="53" queue_c_left="15" queue_c_width="150" queue_c_height="124" aligment_font_c="taCenter" layout_font_c="tlCenter" font_color_c="#FFFFFF" active_c="-1"/>
+    </block>
+    <block id="Antrian3" x="5" y="397" w="597" h="190">
+      <queueview duration="00:00:00" url="PRAMITHA\PRAMITHA\T64_T_03.jpg" url_modal="PRAMITHA\PRAMITHA\" font="Traffic 05" size="72" style="[]" color="#FFFFFF" font_color="#FF0000" aligment_font="taLeftJustify" layout_font="tlCenter" udp_port="3333" hide_info="1" service="3" counter="" group="" group_remaining="" text_service_id="AMBIL HASIL" text_counter_id="3" queue_n_top="55" queue_n_left="300" queue_n_width="277" queue_n_height="124" font_a="Traffic 05" size_a="72" style_a="[]" color_a="#FFFFFF" queue_a_top="53" queue_a_left="208" queue_a_width="85" queue_a_height="124" aligment_font_a="taCenter" layout_font_a="tlCenter" font_color_a="#800000" active_a="-1" font_s="Century Gothic" size_s="22" style_s="[Bold]" color_s="#FFFFFF" queue_s_top="5" queue_s_left="210" queue_s_width="365" queue_s_height="37" aligment_font_s="taCenter" layout_font_s="tlCenter" font_color_s="#FFFFFF" active_s="0" font_c="Traffic 05" size_c="72" style_c="[]" color_c="#FFFFFF" queue_c_top="53" queue_c_left="15" queue_c_width="150" queue_c_height="124" aligment_font_c="taCenter" layout_font_c="tlCenter" font_color_c="#FFFFFF" active_c="-1"/>
+    </block>
+    <block id="Antrian4" x="5" y="590" w="597" h="190">
+      <queueview duration="00:00:00" url="PRAMITHA\PRAMITHA\T64_T_03.jpg" url_modal="PRAMITHA\PRAMITHA\" font="Traffic 05" size="72" style="[]" color="#FFFFFF" font_color="#FF0000" aligment_font="taLeftJustify" layout_font="tlCenter" udp_port="3333" hide_info="1" service="4" counter="" group="" group_remaining="" text_service_id="" text_counter_id="" queue_n_top="55" queue_n_left="300" queue_n_width="277" queue_n_height="124" font_a="Traffic 05" size_a="72" style_a="[]" color_a="#FFFFFF" queue_a_top="53" queue_a_left="208" queue_a_width="85" queue_a_height="124" aligment_font_a="taLeftJustify" layout_font_a="tlCenter" font_color_a="#800000" active_a="-1" font_s="Century Gothic" size_s="22" style_s="[Bold]" color_s="#FFFFFF" queue_s_top="5" queue_s_left="210" queue_s_width="365" queue_s_height="37" aligment_font_s="taCenter" layout_font_s="tlCenter" font_color_s="#FFFFFF" active_s="0" font_c="Traffic 05" size_c="72" style_c="[]" color_c="#FFFFFF" queue_c_top="53" queue_c_left="15" queue_c_width="150" queue_c_height="124" aligment_font_c="taCenter" layout_font_c="tlCenter" font_color_c="#FFFFFF" active_c="-1"/>
+    </block>
+    <block id="Antrian5" x="5" y="784" w="597" h="190">
+      <queueview duration="00:00:00" url="PRAMITHA\PRAMITHA\T64_T_03.jpg" url_modal="PRAMITHA\PRAMITHA\" font="Traffic 05" size="72" style="[]" color="#FFFFFF" font_color="#FF0000" aligment_font="taLeftJustify" layout_font="tlCenter" udp_port="3333" hide_info="1" service="5" counter="" group="" group_remaining="" text_service_id="" text_counter_id="" queue_n_top="55" queue_n_left="300" queue_n_width="277" queue_n_height="124" font_a="Traffic 05" size_a="72" style_a="[]" color_a="#FFFFFF" queue_a_top="55" queue_a_left="205" queue_a_width="85" queue_a_height="124" aligment_font_a="taLeftJustify" layout_font_a="tlCenter" font_color_a="#800000" active_a="-1" font_s="Century Gothic" size_s="22" style_s="[Bold]" color_s="#FFFFFF" queue_s_top="5" queue_s_left="210" queue_s_width="365" queue_s_height="37" aligment_font_s="taCenter" layout_font_s="tlCenter" font_color_s="#FFFFFF" active_s="0" font_c="Traffic 05" size_c="72" style_c="[]" color_c="#FFFFFF" queue_c_top="53" queue_c_left="15" queue_c_width="150" queue_c_height="124" aligment_font_c="taCenter" layout_font_c="tlCenter" font_color_c="#FFFFFF" active_c="-1"/>
+    </block>
+    <block id="Tabel" x="1272" y="790" w="639" h="188">
+      <bgimage duration="00:00:00" url="PRAMITHA\PRAMITHA\T64_T_20.jpg" url_modal="PRAMITHA\PRAMITHA\"/>
+    </block>
+    <block id="Slide" x="625" y="790" w="640" h="188">
+      <image duration="00:00:15" url="PRAMITHA\PRAMITHA\1.jpg" url_modal="PRAMITHA\PRAMITHA\"/>
+      <image duration="00:00:15" url="PRAMITHA\PRAMITHA\2.jpg" url_modal="PRAMITHA\PRAMITHA\"/>
+      <image duration="00:00:15" url="PRAMITHA\PRAMITHA\3.jpg" url_modal="PRAMITHA\PRAMITHA\"/>
+    </block>
+  </program>
+</channel>

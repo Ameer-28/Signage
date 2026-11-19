@@ -18,29 +18,45 @@ export class SignageService implements OnModuleInit {
   /** Memakai channel.json (hasil edit CMS) kalau ada. Kalau belum, impor dari XML SevenSign lalu simpan. */
   load() {
     if (existsSync(this.file)) {
-      this.channel = JSON.parse(readFileSync(this.file, 'utf8'));
-      return;
+      try {
+        this.channel = JSON.parse(readFileSync(this.file, 'utf8'));
+        return;
+      } catch (err) {
+        console.error('Gagal mem-parse channel.json:', err);
+      }
     }
-    const xml = readFileSync(join(process.cwd(), 'data', 'PRAMITHA.XML'), 'utf8').replace(/^\uFEFF/, '');
-    const doc: any = new XMLParser({
-      ignoreAttributes: false,
-      attributeNamePrefix: '',
-      isArray: (n) => ['block', 'item', ...KINDS].includes(n),
-    }).parse(xml);
-    const p = doc.channel.program;
-    this.channel = {
-      version: Date.now(),
-      name: doc.channel.name,
-      w: +p.w,
-      h: +p.h,
-      blocks: p.block
-        .filter((b: any) => b.id)
-        .map((b: any) => {
-          const items = KINDS.flatMap((k) => (b[k] ?? []).map((a: any) => this.item(k, a)));
-          return { id: b.id, x: +b.x, y: +b.y, w: +b.w, h: +b.h, orig: { x: +b.x, y: +b.y, w: +b.w, h: +b.h }, items, playlist: items.some((i: any) => i.type === 'image') };
-        }),
-    };
-    writeFileSync(this.file, JSON.stringify(this.channel));
+    const xmlFile = join(process.cwd(), 'data', 'PRAMITHA.XML');
+    if (existsSync(xmlFile)) {
+      const xml = readFileSync(xmlFile, 'utf8').replace(/^\uFEFF/, '');
+      const doc: any = new XMLParser({
+        ignoreAttributes: false,
+        attributeNamePrefix: '',
+        isArray: (n) => ['block', 'item', ...KINDS].includes(n),
+      }).parse(xml);
+      const p = doc.channel.program;
+      this.channel = {
+        version: Date.now(),
+        name: doc.channel.name,
+        w: +p.w,
+        h: +p.h,
+        blocks: p.block
+          .filter((b: any) => b.id)
+          .map((b: any) => {
+            const items = KINDS.flatMap((k) => (b[k] ?? []).map((a: any) => this.item(k, a)));
+            return { id: b.id, x: +b.x, y: +b.y, w: +b.w, h: +b.h, orig: { x: +b.x, y: +b.y, w: +b.w, h: +b.h }, items, playlist: items.some((i: any) => i.type === 'image') };
+          }),
+      };
+      writeFileSync(this.file, JSON.stringify(this.channel));
+    } else {
+      console.warn('PRAMITHA.XML tidak ditemukan. Menggunakan channel default kosong.');
+      this.channel = {
+        version: Date.now(),
+        name: 'Signage',
+        w: 1920,
+        h: 1080,
+        blocks: [],
+      };
+    }
   }
 
   save(ch: any) {
