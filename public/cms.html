@@ -3,81 +3,820 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CMS</title>
+<title>Signage Studio - CMS</title>
 <style>
-  :root { color-scheme: light dark; }
-  body { font: 16px system-ui, sans-serif; max-width: 760px; margin: 24px auto; padding: 0 16px; }
-  section { border: 1px solid color-mix(in srgb, currentColor 25%, transparent); border-radius: 10px; padding: 4px 16px 16px; margin: 16px 0; }
-  ul { list-style: none; padding: 0; margin: 0 0 12px; }
-  li { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 8px 0; border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent); }
-  .thumb { width: 96px; height: 54px; object-fit: cover; border-radius: 4px; background: #888; }
-  .name { flex: 1; min-width: 120px; overflow-wrap: anywhere; }
-  input, textarea, button { font: inherit; padding: 8px; box-sizing: border-box; }
-  input[type=number] { width: 72px; }
-  textarea { width: 100%; }
-  .bar { position: sticky; bottom: 0; display: flex; align-items: center; gap: 12px; padding: 12px 0; background: Canvas; }
-  #stage { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #222 center / cover; overflow: hidden; touch-action: none; user-select: none; }
-  .blk { position: absolute; box-sizing: border-box; border: 2px solid #fff9; background: #0007 center / 100% 100% no-repeat; color: #fff; font-size: 12px; cursor: move; }
-  .blk.on { outline: 3px solid #4af; z-index: 5; }
-  .blk span { position: absolute; left: 0; top: 0; padding: 1px 4px; background: #000b; }
-  .blk i { position: absolute; right: 0; bottom: 0; width: 16px; height: 16px; background: #4af; cursor: nwse-resize; }
-  .lay label { display: inline-block; margin: 4px 8px 4px 0; }
+  :root {
+    --bg-page: #0a0d14;
+    --bg-surface: #101623;
+    --bg-surface-sub: #172033;
+    --bg-card: #151d2e;
+    --border: #223049;
+    --border-hover: #32476b;
+    --border-active: #3b82f6;
+    --text-main: #f1f5f9;
+    --text-sub: #94a3b8;
+    --text-muted: #64748b;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-glow: rgba(37, 99, 235, 0.35);
+    --accent: #06b6d4;
+    --success: #10b981;
+    --danger: #ef4444;
+    --danger-sub: rgba(239, 68, 68, 0.15);
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 18px;
+    --font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg-page);
+    color: var(--text-main);
+    font-family: var(--font);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  /* Utility & Inputs */
+  input, select, textarea, button {
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--text-main);
+  }
+  input[type="text"], input[type="password"], input[type="number"], select, textarea {
+    background: var(--bg-surface-sub);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 9px 12px;
+    outline: none;
+    transition: all 0.2s;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--border-active);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+  }
+  select {
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 14px;
+    padding-right: 32px;
+  }
+
+  /* Header Bar */
+  .top-bar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(16, 22, 35, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px;
+    height: 64px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand-logo {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    font-weight: 800;
+    box-shadow: 0 4px 12px var(--primary-glow);
+  }
+  .brand-text {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    color: var(--text-main);
+  }
+  .brand-badge {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    background: rgba(37, 99, 235, 0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+
+  /* Navigation Tabs */
+  .tabs {
+    display: flex;
+    background: var(--bg-surface-sub);
+    padding: 3px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    gap: 2px;
+  }
+  .tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-sub);
+    font-weight: 600;
+    font-size: 13px;
+    padding: 7px 16px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.18s;
+  }
+  .tab-btn:hover {
+    color: var(--text-main);
+  }
+  .tab-btn.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 2px 8px var(--primary-glow);
+  }
+
+  /* Actions Right */
+  .bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 7px 14px;
+    color: var(--text-sub);
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+  .btn-ghost:hover {
+    color: var(--text-main);
+    border-color: var(--border-hover);
+    background: rgba(255, 255, 255, 0.04);
+  }
+  .btn-publish {
+    background: linear-gradient(135deg, var(--primary), #3b82f6);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 8px 18px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 14px var(--primary-glow);
+    transition: all 0.2s;
+  }
+  .btn-publish:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px var(--primary-glow);
+  }
+  .btn-publish:active {
+    transform: translateY(1px);
+  }
+
+  /* Main Container */
+  .main-content {
+    flex: 1;
+    max-width: 1280px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  /* Login Screen */
+  #login {
+    max-width: 400px;
+    margin: 80px auto;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 36px 32px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    text-align: center;
+    background-image: radial-gradient(at 50% 0%, rgba(37, 99, 235, 0.15) 0px, transparent 60%);
+  }
+  #login h1 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text-main);
+  }
+  #login p.desc {
+    font-size: 13px;
+    color: var(--text-sub);
+    margin-bottom: 24px;
+  }
+  .login-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    text-align: left;
+  }
+  .login-input-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-sub);
+  }
+  #in {
+    width: 100%;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 14px var(--primary-glow);
+    margin-top: 8px;
+    transition: background 0.2s;
+  }
+  #in:hover { background: var(--primary-hover); }
+  #lmsg {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--danger);
+    min-height: 18px;
+  }
+
+  /* Layout Tab Styling */
+  .layout-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 960px) {
+    .layout-grid { grid-template-columns: 1fr; }
+  }
+
+  .canvas-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+  .canvas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 0 4px;
+  }
+  .canvas-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-sub);
+  }
+  .canvas-screen-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
+    border: 1px solid #1f293d;
+  }
+  #stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: #111 center / cover no-repeat;
+    touch-action: none;
+    user-select: none;
+  }
+  .blk {
+    position: absolute;
+    box-sizing: border-box;
+    border: 2px solid rgba(255, 255, 255, 0.45);
+    background: rgba(0, 0, 0, 0.45) center / 100% 100% no-repeat;
+    color: #fff;
+    font-size: 11px;
+    cursor: move;
+    border-radius: 2px;
+    backdrop-filter: blur(2px);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .blk.on {
+    outline: 2px solid #38bdf8;
+    border-color: #38bdf8;
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+    z-index: 10;
+  }
+  .blk span {
+    position: absolute;
+    left: 0;
+    top: 0;
+    padding: 2px 6px;
+    background: rgba(15, 23, 42, 0.85);
+    color: #f1f5f9;
+    font-size: 10px;
+    font-weight: 600;
+    border-bottom-right-radius: 4px;
+    pointer-events: none;
+  }
+  .blk i {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 18px;
+    height: 18px;
+    background: #38bdf8;
+    cursor: nwse-resize;
+    border-top-left-radius: 4px;
+    box-shadow: 0 0 6px rgba(0,0,0,0.5);
+  }
+
+  /* Inspector Sidebar */
+  .inspector-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+  .section-heading {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+  }
+  .form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .form-row label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-sub);
+  }
+  .coord-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .coord-item {
+    display: flex;
+    align-items: center;
+    background: var(--bg-surface-sub);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 2px 8px;
+  }
+  .coord-item span {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    width: 18px;
+  }
+  .coord-item input {
+    border: none;
+    background: transparent;
+    padding: 6px 0;
+    width: 100%;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+  }
+  .coord-item input:focus { box-shadow: none; }
+
+  /* Media Tab Styling */
+  .zones-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .zone-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+  .zone-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .zone-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+  .media-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .media-row {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: border-color 0.2s;
+  }
+  .media-row:hover {
+    border-color: var(--border-hover);
+  }
+  .media-thumb {
+    width: 80px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    background: #000;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .media-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .media-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .media-duration-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-surface-sub);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 4px 8px;
+    flex-shrink: 0;
+  }
+  .media-duration-box input {
+    border: none;
+    background: transparent;
+    width: 44px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 0;
+    color: var(--text-main);
+  }
+  .media-duration-box span {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .media-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .btn-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg-surface-sub);
+    color: var(--text-sub);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-icon:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-main);
+  }
+  .btn-icon.delete:hover {
+    background: var(--danger-sub);
+    color: var(--danger);
+    border-color: rgba(239, 68, 68, 0.4);
+  }
+
+  .upload-dropzone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.01);
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .upload-dropzone:hover {
+    border-color: var(--primary);
+    background: rgba(37, 99, 235, 0.04);
+  }
+  .upload-dropzone input { display: none; }
+  .upload-dropzone-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-sub);
+  }
+  .upload-dropzone-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* Running Text Tab */
+  .ticker-preview-box {
+    background: #000;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+  }
+  .ticker-badge {
+    background: var(--primary);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    margin-right: 14px;
+    flex-shrink: 0;
+  }
+  .ticker-track {
+    color: #ffd700;
+    font-size: 15px;
+    font-weight: 600;
+    display: inline-block;
+  }
+
+  /* Toast & Notification */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 1000;
+    pointer-events: none;
+  }
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  .toast.success { border-color: rgba(16, 185, 129, 0.5); }
+  .toast.error { border-color: rgba(239, 68, 68, 0.5); }
 </style>
 </head>
 <body>
-<h1>CMS</h1>
+
+<!-- Top Navigation Header -->
+<header class="top-bar">
+  <div class="brand">
+    <div class="brand-logo">S</div>
+    <div>
+      <span class="brand-text">Signage Studio</span>
+      <span class="brand-badge">CMS</span>
+    </div>
+  </div>
+
+  <nav class="tabs" id="appNav" style="display: none;">
+    <button class="tab-btn active" data-tab="tab-layout">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg>
+      Layout Layar
+    </button>
+    <button class="tab-btn" data-tab="tab-media">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+      Media & Playlist
+    </button>
+    <button class="tab-btn" data-tab="tab-ticker">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+      Teks Berjalan
+    </button>
+  </nav>
+
+  <div class="bar-actions" id="appActions" style="display: none;">
+    <a href="/player.html" target="_blank" class="btn-ghost">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+      Buka Player
+    </a>
+    <button id="rev" class="btn-ghost" title="Batalkan perubahan yang belum dipublish">Batal</button>
+    <button id="pub" class="btn-publish">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+      Publish Perubahan
+    </button>
+  </div>
+</header>
+
+<!-- Authentication Container -->
 <div id="login">
-  <label for="k">Kunci akses</label>
-  <input id="k" type="password" autocomplete="off">
-  <button id="in">Masuk</button>
+  <h1>Signage Studio</h1>
+  <p class="desc">Masukkan kunci akses (API Key) untuk mengelola konten dan tampilan layar display signage.</p>
+  <div class="login-input-group">
+    <label for="k">Kunci Akses</label>
+    <input id="k" type="password" placeholder="Masukkan API_KEY" autocomplete="off">
+    <button id="in">Masuk ke Studio</button>
+  </div>
   <p id="lmsg" role="status"></p>
 </div>
-<main id="app" hidden>
-  <section class="lay">
-    <h2>Layout layar</h2>
-    <div id="stage" aria-label="Pratinjau layout layar"></div>
-    <p>
-      <label>Blok <select id="sel"></select></label>
-      <label>X <input id="fx" type="number"></label>
-      <label>Y <input id="fy" type="number"></label>
-      <label>Lebar <input id="fw" type="number"></label>
-      <label>Tinggi <input id="fh" type="number"></label>
-    </p>
-    <p>
-      <label>Latar layar
-        <select id="bgsel">
-          <option value="asli">Template asli (dengan bingkai)</option>
-          <option value="polos">Polos (tanpa bingkai)</option>
-          <option value="sendiri" disabled>Gambar sendiri</option>
-        </select>
-      </label>
-      <label>Unggah latar sendiri (1920×1080) <input id="bgf" type="file" accept="image/*"></label>
-    </p>
-    <p>
-      <label><input id="snap" type="checkbox" checked> Tempel ke grid 10 px</label>
-      <button id="rl">Kembalikan layout awal</button>
-      <a href="/player.html" target="_blank">Lihat player</a>
-    </p>
-    <p>Seret blok untuk memindah. Seret kotak biru di sudut kanan bawah untuk mengubah ukuran. Tombol panah menggeser 10 px (Shift: 1 px). Blok antrian, jam, dan kotak info ukurannya terkunci proporsional. Klik Publish untuk menayangkan.</p>
-  </section>
-  <div id="zones"></div>
-  <section>
-    <h2>Teks berjalan</h2>
-    <label for="t">Satu pesan per baris</label>
-    <textarea id="t" rows="5"></textarea>
-  </section>
-  <div class="bar">
-    <button id="pub">Publish</button>
-    <button id="rev">Batalkan perubahan</button>
-    <span id="msg" role="status"></span>
+
+<!-- Main App Studio -->
+<main id="app" class="main-content" hidden>
+  
+  <!-- TAB 1: LAYOUT & LAYAR -->
+  <div id="tab-layout" class="tab-pane">
+    <div class="layout-grid">
+      <!-- Visual Canvas Card -->
+      <div class="canvas-card">
+        <div class="canvas-header">
+          <div class="canvas-title">Pratinjau Layar Display (1920 × 1080)</div>
+          <div style="font-size: 11px; color: var(--text-muted);">
+            Seret kotak atau tarik sudut kanan-bawah untuk mengubah ukuran
+          </div>
+        </div>
+        <div class="canvas-screen-frame">
+          <div id="stage" aria-label="Pratinjau layout layar"></div>
+        </div>
+      </div>
+
+      <!-- Controls & Inspector Card -->
+      <div class="inspector-card">
+        <div class="section-heading">Pengaturan Blok Terpilih</div>
+        
+        <div class="form-row">
+          <label for="sel">Pilih Blok</label>
+          <select id="sel"></select>
+        </div>
+
+        <div class="form-row">
+          <label>Koordinat & Dimensi (Piksel)</label>
+          <div class="coord-grid">
+            <div class="coord-item"><span>X</span><input id="fx" type="number"></div>
+            <div class="coord-item"><span>Y</span><input id="fy" type="number"></div>
+            <div class="coord-item"><span>W</span><input id="fw" type="number"></div>
+            <div class="coord-item"><span>H</span><input id="fh" type="number"></div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
+            <input id="snap" type="checkbox" checked style="accent-color: var(--primary); width: 16px; height: 16px;">
+            <span style="font-size: 13px; color: var(--text-sub);">Tempel ke grid 10 px</span>
+          </label>
+        </div>
+
+        <div class="section-heading" style="margin-top: 10px;">Latar Layar</div>
+        
+        <div class="form-row">
+          <label for="bgsel">Pilihan Latar</label>
+          <select id="bgsel">
+            <option value="asli">Template asli (dengan bingkai)</option>
+            <option value="polos">Polos (tanpa bingkai)</option>
+            <option value="sendiri" disabled>Gambar sendiri</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="bgf">Unggah Latar Sendiri (1920×1080)</label>
+          <input id="bgf" type="file" accept="image/*" style="font-size: 12px; padding: 6px;">
+        </div>
+
+        <div style="margin-top: 10px;">
+          <button id="rl" class="btn-ghost" style="width: 100%; justify-content: center;">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+            Kembalikan Layout Awal
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <!-- TAB 2: MEDIA & PLAYLIST -->
+  <div id="tab-media" class="tab-pane" style="display: none;">
+    <div id="zones" class="zones-container"></div>
+  </div>
+
+  <!-- TAB 3: RUNNING TEXT -->
+  <div id="tab-ticker" class="tab-pane" style="display: none;">
+    <div class="zone-card">
+      <div class="zone-header">
+        <div class="zone-title">Kelola Teks Berjalan (Running Text)</div>
+      </div>
+      
+      <!-- Live Ticker Preview -->
+      <div class="ticker-preview-box">
+        <div class="ticker-badge">LIVE PREVIEW</div>
+        <marquee id="tickerMarquee" class="ticker-track" scrollamount="6">
+          Memuat pesan teks berjalan...
+        </marquee>
+      </div>
+
+      <div class="form-row" style="margin-bottom: 12px;">
+        <label for="t">Teks Informasi (Satu pesan per baris):</label>
+        <textarea id="t" rows="8" placeholder="Tuliskan pesan teks berjalan di sini...&#10;Contoh: Selamat Datang di Pelayanan Kami&#10;Harap memperhatikan nomor antrian Anda"></textarea>
+      </div>
+      <p style="font-size: 12px; color: var(--text-muted);">
+        Setiap baris baru akan dipisahkan dengan tanda titik tengah (•) otomatis saat ditampilkan di layar player.
+      </p>
+    </div>
+  </div>
+
 </main>
+
+<!-- Floating Toast -->
+<div id="toast" class="toast"></div>
+
+<!-- Hidden span for backward compatibility with old msg helper -->
+<span id="msg" style="display: none;"></span>
+
 <script>
 const $ = (s) => document.querySelector(s);
-const NAMES = { Video: 'Iklan utama (besar, tengah)', Slide: 'Iklan kecil (kiri bawah)' };
+const NAMES = { Video: 'Iklan Utama (Besar / Tengah)', Slide: 'Iklan Kecil (Kiri Bawah)' };
 const isSlide = (i) => i.type === 'image' || i.type === 'video';
-let ch = null, key = sessionStorage.getItem('key') || '';
-const msg = (t) => { $('#msg').textContent = t; };
+let ch = null, key = sessionStorage.getItem('key') || localStorage.getItem('key') || '';
+
+// Toast Notification System
+let toastTimer;
+function showToast(text, type = 'info') {
+  clearTimeout(toastTimer);
+  const t = $('#toast');
+  t.textContent = text;
+  t.className = `toast show ${type}`;
+  toastTimer = setTimeout(() => { t.className = 'toast'; }, 3500);
+  $('#msg').textContent = text;
+}
+const msg = (t) => { showToast(t, 'info'); };
+
+// Tab Navigation
+const tabButtons = document.querySelectorAll('.tab-btn');
+const tabPanes = document.querySelectorAll('.tab-pane');
+tabButtons.forEach(btn => {
+  btn.onclick = () => {
+    tabButtons.forEach(b => b.classList.remove('active'));
+    tabPanes.forEach(p => p.style.display = 'none');
+    btn.classList.add('active');
+    const target = $(`#${btn.dataset.tab}`);
+    if (target) target.style.display = 'block';
+    if (btn.dataset.tab === 'tab-ticker') updateTickerPreview();
+  };
+});
+
+function updateTickerPreview() {
+  const lines = $('#t').value.split('\n').map(s => s.trim()).filter(Boolean);
+  const marquee = $('#tickerMarquee');
+  if (marquee) {
+    marquee.textContent = lines.length ? lines.join('      •      ') : 'Belum ada pesan teks berjalan.';
+  }
+}
+$('#t').addEventListener('input', updateTickerPreview);
 
 async function load() {
   ch = await (await fetch('/api/channel')).json();
@@ -88,28 +827,52 @@ async function load() {
   for (const b of ch.blocks) if (b.playlist) z.append(zone(b));
   stageDraw();
   $('#t').value = (ch.blocks.flatMap((b) => b.items).find((i) => i.type === 'newsticker')?.lines ?? []).join('\n');
+  updateTickerPreview();
 }
 
 function zone(b) {
-  const box = document.createElement('section');
-  box.innerHTML = '<h2></h2><ul></ul><label>Tambah gambar atau video <input type="file" accept="image/*,video/mp4,video/webm" multiple></label>';
-  box.querySelector('h2').textContent = `${NAMES[b.id] ?? b.id} (${b.w}×${b.h})`;
-  const ul = box.querySelector('ul');
+  const box = document.createElement('div');
+  box.className = 'zone-card';
+  box.innerHTML = `
+    <div class="zone-header">
+      <div class="zone-title">${NAMES[b.id] ?? b.id} <span style="font-size: 13px; color: var(--text-muted); font-weight: 500;">(${b.w} × ${b.h} px)</span></div>
+    </div>
+    <ul class="media-list"></ul>
+    <label class="upload-dropzone">
+      <input type="file" accept="image/*,video/mp4,video/webm" multiple>
+      <div style="font-size: 24px;">📁</div>
+      <div class="upload-dropzone-text">+ Tambah Gambar atau Video</div>
+      <div class="upload-dropzone-sub">Klik atau drag file ke sini (Mendukung JPG, PNG, GIF, WEBP, MP4, WEBM)</div>
+    </label>
+  `;
+  const ul = box.querySelector('.media-list');
   const draw = () => {
     ul.replaceChildren();
     b.slides.forEach((it, n) => ul.append(row(b, it, n, draw)));
-    if (!b.slides.length) ul.append(Object.assign(document.createElement('li'), { textContent: 'Belum ada isi.' }));
+    if (!b.slides.length) {
+      const empty = document.createElement('li');
+      empty.style.cssText = 'color: var(--text-muted); font-size: 13px; text-align: center; padding: 16px; border: 1px dashed var(--border); border-radius: var(--radius-md);';
+      empty.textContent = 'Belum ada konten media di playlist ini.';
+      ul.append(empty);
+    }
   };
   box.querySelector('input').onchange = async (e) => {
     for (const f of e.target.files) {
-      msg(`Mengunggah ${f.name}...`);
+      showToast(`Mengunggah ${f.name}...`, 'info');
       const fd = new FormData();
       fd.append('file', f);
-      const r = await fetch('/api/media', { method: 'POST', headers: { 'x-api-key': key }, body: fd });
-      if (!r.ok) { msg(r.status === 401 ? 'Kunci akses salah.' : `${f.name} ditolak. Gunakan jpg, png, gif, webp, mp4, atau webm.`); continue; }
-      const m = await r.json();
-      b.slides.push({ type: m.type, src: m.src, seconds: m.type === 'video' ? 0 : 15 });
-      msg('Unggahan selesai. Klik Publish untuk menayangkan.');
+      try {
+        const r = await fetch('/api/media', { method: 'POST', headers: { 'x-api-key': key }, body: fd });
+        if (!r.ok) {
+          showToast(r.status === 401 ? 'Kunci akses salah.' : `${f.name} ditolak. Gunakan format yang didukung.`, 'error');
+          continue;
+        }
+        const m = await r.json();
+        b.slides.push({ type: m.type, src: m.src, seconds: m.type === 'video' ? 0 : 15 });
+        showToast('Unggahan selesai. Klik Publish untuk menayangkan.', 'success');
+      } catch {
+        showToast('Koneksi upload gagal.', 'error');
+      }
     }
     e.target.value = '';
     draw();
@@ -120,32 +883,55 @@ function zone(b) {
 
 function row(b, it, n, draw) {
   const li = document.createElement('li');
+  li.className = 'media-row';
+  
   const th = document.createElement(it.type === 'video' ? 'video' : 'img');
-  th.className = 'thumb';
+  th.className = 'media-thumb';
   th.src = it.src;
   if (it.type === 'video') th.muted = true;
-  const nm = document.createElement('span');
-  nm.className = 'name';
+
+  const info = document.createElement('div');
+  info.className = 'media-info';
+  const nm = document.createElement('div');
+  nm.className = 'media-name';
   nm.textContent = decodeURIComponent(it.src.split('/').pop());
+  const badge = document.createElement('span');
+  badge.style.cssText = 'font-size: 10px; font-weight: 700; text-transform: uppercase; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; color: var(--text-sub); margin-top: 4px; display: inline-block;';
+  badge.textContent = it.type === 'video' ? 'VIDEO' : 'GAMBAR';
+  info.append(nm, badge);
+
+  const durBox = document.createElement('div');
+  durBox.className = 'media-duration-box';
   const sec = document.createElement('input');
   sec.type = 'number';
   sec.min = 0;
   sec.value = it.seconds;
-  sec.setAttribute('aria-label', 'Durasi dalam detik');
-  sec.title = it.type === 'video' ? 'Detik. 0 = putar sampai selesai' : 'Lama tampil (detik)';
+  sec.title = it.type === 'video' ? '0 = putar sampai selesai' : 'Lama tampil (detik)';
   sec.oninput = () => { it.seconds = Math.max(0, +sec.value || 0); };
-  const btn = (t, label, f) => {
+  const durLabel = document.createElement('span');
+  durLabel.textContent = 'detik';
+  durBox.append(sec, durLabel);
+
+  const actions = document.createElement('div');
+  actions.className = 'media-actions';
+  const btn = (icon, label, f, isDelete = false) => {
     const x = document.createElement('button');
-    x.textContent = t;
+    x.className = `btn-icon ${isDelete ? 'delete' : ''}`;
+    x.innerHTML = icon;
     x.setAttribute('aria-label', label);
+    x.title = label;
     x.onclick = f;
     return x;
   };
   const move = (d) => { b.slides.splice(n + d, 0, b.slides.splice(n, 1)[0]); draw(); };
-  li.append(th, nm, sec, 'detik',
+  
+  actions.append(
     btn('↑', 'Naikkan', () => n > 0 && move(-1)),
     btn('↓', 'Turunkan', () => n < b.slides.length - 1 && move(1)),
-    btn('Hapus', 'Hapus dari daftar', () => { b.slides.splice(n, 1); draw(); }));
+    btn('✕', 'Hapus dari daftar', () => { b.slides.splice(n, 1); draw(); }, true)
+  );
+
+  li.append(th, info, durBox, actions);
   return li;
 }
 
@@ -157,6 +943,7 @@ const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 const BGS = { asli: '/media/BG.jpg', polos: '/media/BG_polos.jpg' };
 const bgItem = () => ch.blocks.find((b) => b.id === 'BackGround')?.items.find((i) => i.type === 'bgimage');
 const bgMode = () => Object.keys(BGS).find((k) => BGS[k] === bgItem()?.src) ?? 'sendiri';
+
 function paintBg() {
   const m = bgMode();
   $('#stage').style.backgroundImage = bgItem() ? `url("${bgItem().src}")` : '';
@@ -222,8 +1009,10 @@ function setBox(b, v, exact) {
   if (prev !== [x, y, w, h].join() && bgMode() === 'asli') {
     bgItem().src = BGS.polos;
     paintBg();
-    msg('Latar diganti ke Polos karena bingkai template asli tidak ikut berpindah. Bisa diubah di pilihan Latar layar. Klik Publish untuk menayangkan.');
-  } else msg('Layout diubah. Klik Publish untuk menayangkan.');
+    showToast('Latar diganti ke Polos karena bingkai template asli tidak ikut berpindah.', 'info');
+  } else {
+    showToast('Layout diubah. Klik Publish untuk menayangkan.', 'info');
+  }
 }
 
 function grab(e, b, resize) {
@@ -258,27 +1047,34 @@ $('#rl').onclick = () => {
   for (const b of ed()) Object.assign(b, b.orig);
   if (bgMode() === 'polos') bgItem().src = BGS.asli;
   stageDraw();
-  msg('Layout dan latar dikembalikan ke awal. Klik Publish untuk menayangkan.');
+  showToast('Layout dan latar dikembalikan ke awal.', 'info');
 };
 $('#bgsel').onchange = (e) => {
   if (!BGS[e.target.value] || !bgItem()) return;
   bgItem().src = BGS[e.target.value];
   paintBg();
-  msg('Latar diganti. Klik Publish untuk menayangkan.');
+  showToast('Latar diganti. Klik Publish untuk menayangkan.', 'info');
 };
 $('#bgf').onchange = async (e) => {
   const f = e.target.files[0];
   if (!f || !bgItem()) return;
-  msg(`Mengunggah ${f.name}...`);
+  showToast(`Mengunggah ${f.name}...`, 'info');
   const fd = new FormData();
   fd.append('file', f);
-  const r = await fetch('/api/media', { method: 'POST', headers: { 'x-api-key': key }, body: fd });
-  const m = r.ok ? await r.json() : null;
-  if (!m || m.type !== 'image') { msg(r.status === 401 ? 'Kunci akses salah.' : 'Latar harus berupa gambar (jpg, png, gif, atau webp).'); return; }
-  bgItem().src = m.src;
-  paintBg();
-  e.target.value = '';
-  msg('Latar diganti. Klik Publish untuk menayangkan.');
+  try {
+    const r = await fetch('/api/media', { method: 'POST', headers: { 'x-api-key': key }, body: fd });
+    const m = r.ok ? await r.json() : null;
+    if (!m || m.type !== 'image') {
+      showToast(r.status === 401 ? 'Kunci akses salah.' : 'Latar harus berupa gambar (jpg, png, gif, webp).', 'error');
+      return;
+    }
+    bgItem().src = m.src;
+    paintBg();
+    e.target.value = '';
+    showToast('Latar berhasil diganti.', 'success');
+  } catch {
+    showToast('Koneksi upload latar gagal.', 'error');
+  }
 };
 
 function payload() {
@@ -293,25 +1089,46 @@ function payload() {
 }
 
 $('#pub').onclick = async () => {
-  const r = await fetch('/api/channel', {
-    method: 'PUT',
-    headers: { 'content-type': 'application/json', 'x-api-key': key },
-    body: JSON.stringify(payload()),
-  });
-  if (!r.ok) { msg(r.status === 401 ? 'Kunci akses salah.' : 'Gagal publish. Periksa isian.'); return; }
-  await load();
-  msg('Berhasil dipublish. Semua layar akan berubah dalam beberapa detik.');
+  try {
+    const r = await fetch('/api/channel', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json', 'x-api-key': key },
+      body: JSON.stringify(payload()),
+    });
+    if (!r.ok) {
+      showToast(r.status === 401 ? 'Kunci akses salah.' : 'Gagal publish. Periksa isian.', 'error');
+      return;
+    }
+    await load();
+    showToast('Berhasil dipublish! Semua layar display akan terupdate otomatis.', 'success');
+  } catch {
+    showToast('Koneksi server gagal saat publish.', 'error');
+  }
 };
-$('#rev').onclick = async () => { await load(); msg('Perubahan dibatalkan.'); };
+
+$('#rev').onclick = async () => {
+  await load();
+  showToast('Perubahan dibatalkan.', 'info');
+};
 
 async function login() {
   key = $('#k').value;
-  const r = await fetch('/api/auth', { headers: { 'x-api-key': key } });
-  if (!r.ok) { $('#lmsg').textContent = 'Kunci akses salah.'; return; }
-  sessionStorage.setItem('key', key);
-  $('#login').hidden = true;
-  $('#app').hidden = false;
-  await load();
+  try {
+    const r = await fetch('/api/auth', { headers: { 'x-api-key': key } });
+    if (!r.ok) {
+      $('#lmsg').textContent = 'Kunci akses salah. Silakan coba lagi.';
+      return;
+    }
+    sessionStorage.setItem('key', key);
+    localStorage.setItem('key', key);
+    $('#login').hidden = true;
+    $('#app').hidden = false;
+    $('#appNav').style.display = 'flex';
+    $('#appActions').style.display = 'flex';
+    await load();
+  } catch {
+    $('#lmsg').textContent = 'Tidak dapat menghubungi server.';
+  }
 }
 $('#in').onclick = login;
 $('#k').onkeydown = (e) => { if (e.key === 'Enter') login(); };

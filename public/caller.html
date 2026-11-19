@@ -3,76 +3,682 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Panggil antrian</title>
+<title>Pemanggil Antrian - Signage</title>
 <style>
-  body { font: 16px system-ui, sans-serif; max-width: 420px; margin: 32px auto; padding: 0 16px; }
-  label { display: block; margin: 14px 0 4px; }
-  input, select, button { font: inherit; padding: 10px; width: 100%; box-sizing: border-box; }
-  button { margin-top: 14px; cursor: pointer; }
+  :root {
+    --bg-main: #0b0f19;
+    --bg-card: #111827;
+    --bg-card-sub: #1a2234;
+    --border: #232f45;
+    --border-focus: #3b82f6;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-glow: rgba(37, 99, 235, 0.35);
+    --success: #10b981;
+    --danger: #ef4444;
+    --danger-hover: #dc2626;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg-main);
+    color: var(--text-primary);
+    font-family: var(--font);
+    min-height: 100vh;
+    padding: 24px 16px 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.12) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 50%);
+  }
+
+  .container {
+    width: 100%;
+    max-width: 480px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 4px 4px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--primary), #6366f1);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    box-shadow: 0 4px 12px var(--primary-glow);
+  }
+  .brand-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+  }
+  .brand-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    transition: background 0.3s;
+  }
+  .status-dot.online {
+    background: var(--success);
+    box-shadow: 0 0 8px var(--success);
+  }
+
+  /* Live Overview Cards */
+  .live-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .panel-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+  }
+  .live-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+  }
+  .live-card {
+    background: var(--bg-card-sub);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .live-card.active {
+    border-color: var(--primary);
+    background: rgba(37, 99, 235, 0.1);
+  }
+  .live-card-service {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .live-card-num {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-top: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Main Card */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    margin-bottom: 16px;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+
+  .input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  input, select {
+    width: 100%;
+    background: var(--bg-card-sub);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 15px;
+    padding: 12px 14px;
+    outline: none;
+    transition: all 0.2s;
+  }
+  input:focus, select:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+  }
+  select {
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 16px;
+    padding-right: 40px;
+  }
+
+  /* Prefix & Stepper Number Row */
+  .num-row {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 12px;
+  }
+  .stepper-box {
+    display: flex;
+    align-items: center;
+    background: var(--bg-card-sub);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .stepper-box:focus-within {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+  }
+  .stepper-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 20px;
+    font-weight: 700;
+    width: 44px;
+    height: 48px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s;
+    user-select: none;
+  }
+  .stepper-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+  }
+  .stepper-box input {
+    border: none;
+    background: transparent;
+    text-align: center;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-primary);
+    padding: 8px 0;
+    width: 100%;
+    font-variant-numeric: tabular-nums;
+  }
+  .stepper-box input:focus {
+    box-shadow: none;
+  }
+
+  /* Actions */
+  .btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, var(--primary), #3b82f6);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 15px 20px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 6px 20px var(--primary-glow);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    margin-top: 8px;
+  }
+  .btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-hover), #2563eb);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px var(--primary-glow);
+  }
+  .btn-primary:active {
+    transform: translateY(1px);
+  }
+
+  .btn-secondary {
+    width: 100%;
+    background: var(--bg-card-sub);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--text-muted);
+  }
+
+  /* Settings / Collapsible Footer */
+  .footer-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px 20px;
+  }
+  .panel-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+  }
+  .panel-toggle-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-arrow {
+    font-size: 12px;
+    color: var(--text-muted);
+    transition: transform 0.2s;
+  }
+  .panel-content {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .btn-danger-outline {
+    width: 100%;
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+  }
+  .btn-danger-outline:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--danger);
+  }
+
+  /* Toast Notification */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    opacity: 0;
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 100;
+    pointer-events: none;
+  }
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+  .toast.success { border-color: rgba(16, 185, 129, 0.5); }
+  .toast.error { border-color: rgba(239, 68, 68, 0.5); }
 </style>
 </head>
 <body>
-<h1>Panggil antrian</h1>
-<label for="k">Kunci akses</label><input id="k" type="password" autocomplete="off">
-<label for="s">Layanan</label><select id="s"></select>
-<label for="p">Huruf awalan</label><input id="p" maxlength="2" value="A">
-<label for="n">Nomor</label><input id="n" type="number" min="0" value="1">
-<button id="go">Panggil</button>
-<button id="re">Panggil ulang</button>
-<button id="clr" style="background:#dc3545;color:#fff;border:none;">Kosongkan antrian layanan ini</button>
-<button id="clr-all" style="background:#6c757d;color:#fff;border:none;">Kosongkan semua antrian</button>
-<p id="m" role="status"></p>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <div class="brand">
+      <div class="brand-icon">📢</div>
+      <div>
+        <div class="brand-title">Panggil Antrian</div>
+        <div class="brand-sub">Signage Queue Controller</div>
+      </div>
+    </div>
+    <div class="status-badge">
+      <span id="dot" class="status-dot"></span>
+      <span id="status-text">Menghubungkan</span>
+    </div>
+  </div>
+
+  <!-- Live Status Monitoring -->
+  <div class="live-panel">
+    <div class="panel-header">
+      <div class="panel-title">Layar Display Saat Ini</div>
+    </div>
+    <div id="liveGrid" class="live-grid">
+      <div style="grid-column: 1/-1; color: var(--text-muted); font-size: 13px; text-align: center; padding: 10px 0;">
+        Memuat data antrian...
+      </div>
+    </div>
+  </div>
+
+  <!-- Calling Form Card -->
+  <div class="card">
+    <div class="form-group">
+      <label for="s">Layanan / Loket</label>
+      <select id="s"></select>
+    </div>
+
+    <div class="form-group">
+      <label>Nomor Panggilan Berikutnya</label>
+      <div class="num-row">
+        <div>
+          <input id="p" maxlength="2" value="A" placeholder="Awalan" style="text-align: center; font-weight: 700; font-size: 18px; text-transform: uppercase;">
+        </div>
+        <div class="stepper-box">
+          <button class="stepper-btn" id="dec" title="Kurangi 1">−</button>
+          <input id="n" type="number" min="1" value="1">
+          <button class="stepper-btn" id="inc" title="Tambah 1">+</button>
+        </div>
+      </div>
+    </div>
+
+    <button id="go" class="btn-primary">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+      </svg>
+      Panggil Antrian
+    </button>
+
+    <button id="re" class="btn-secondary">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+      Panggil Ulang Nomor Terakhir
+    </button>
+  </div>
+
+  <!-- Settings & Reset Panel -->
+  <div class="footer-panel">
+    <div class="panel-toggle" id="toggleSettings">
+      <div class="panel-toggle-title">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        Pengaturan & Reset Antrian
+      </div>
+      <span class="panel-arrow" id="panelArrow">▼</span>
+    </div>
+
+    <div class="panel-content" id="settingsContent" style="display: none;">
+      <div class="form-group" style="margin-bottom: 14px;">
+        <label for="k">Kunci Akses (API Key)</label>
+        <input id="k" type="password" placeholder="Masukkan API_KEY" autocomplete="off">
+      </div>
+
+      <div style="margin-top: 16px;">
+        <label style="color: var(--danger);">Zona Bahaya (Reset)</label>
+        <button id="clr" class="btn-danger-outline">
+          Kosongkan Antrian Layanan Terpilih
+        </button>
+        <button id="clr-all" class="btn-danger-outline" style="border-color: rgba(239, 68, 68, 0.2); color: #f87171;">
+          Kosongkan Seluruh Antrian di Layar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Floating Toast -->
+<div id="toast" class="toast"></div>
+
+<script src="/socket.io/socket.io.js"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 let last = null;
+let currentQueues = {};
+let serviceMap = {};
 
+// Toast helper
+let toastTimer;
+function showToast(msg, type = 'info') {
+  clearTimeout(toastTimer);
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  toastTimer = setTimeout(() => { t.className = 'toast'; }, 3500);
+}
+
+// LocalStorage API key
 const savedKey = localStorage.getItem('signage_api_key');
 if (savedKey) $('k').value = savedKey;
 $('k').addEventListener('input', () => localStorage.setItem('signage_api_key', $('k').value));
 
-fetch('/api/channel').then((r) => r.json()).then((ch) => {
-  for (const b of ch.blocks) for (const i of b.items) {
-    if (i.type === 'queueview' && i.text_service_id) $('s').add(new Option(i.text_service_id, i.service));
+// Collapsible Settings
+$('toggleSettings').onclick = () => {
+  const content = $('settingsContent');
+  const arrow = $('panelArrow');
+  const isHidden = content.style.display === 'none';
+  content.style.display = isHidden ? 'block' : 'none';
+  arrow.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+};
+
+// Stepper
+$('dec').onclick = () => { $('n').value = Math.max(1, (+($('n').value) || 1) - 1); };
+$('inc').onclick = () => { $('n').value = (+($('n').value) || 0) + 1; };
+
+// Uppercase prefix
+$('p').addEventListener('input', () => { $('p').value = $('p').value.toUpperCase(); });
+
+// Load channel for services
+fetch('/api/channel')
+  .then((r) => r.json())
+  .then((ch) => {
+    $('s').replaceChildren();
+    serviceMap = {};
+    for (const b of ch.blocks) {
+      for (const i of b.items) {
+        if (i.type === 'queueview' && i.text_service_id) {
+          $('s').add(new Option(i.text_service_id, i.service));
+          serviceMap[i.service] = i.text_service_id;
+        }
+      }
+    }
+    renderLiveGrid();
+  })
+  .catch(() => showToast('Gagal memuat daftar layanan', 'error'));
+
+function renderLiveGrid() {
+  const grid = $('liveGrid');
+  const services = Object.keys(serviceMap);
+  if (!services.length) {
+    grid.innerHTML = '<div style="grid-column: 1/-1; color: var(--text-muted); font-size: 13px; text-align: center;">Tidak ada blok antrian di channel.</div>';
+    return;
   }
+  grid.innerHTML = services.map((sId) => {
+    const q = currentQueues[sId];
+    const displayNum = q ? `${q.prefix}${q.number}` : '—';
+    const isSelected = $('s').value == sId;
+    return `
+      <div class="live-card ${isSelected ? 'active' : ''}" onclick="selectService('${sId}')" style="cursor: pointer;">
+        <div class="live-card-service">${serviceMap[sId] || 'Layanan ' + sId}</div>
+        <div class="live-card-num">${displayNum}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectService(sId) {
+  $('s').value = sId;
+  renderLiveGrid();
+}
+$('s').addEventListener('change', renderLiveGrid);
+
+// Socket.IO
+const sock = io();
+sock.on('connect', () => {
+  $('dot').className = 'status-dot online';
+  $('status-text').textContent = 'Online';
+});
+sock.on('disconnect', () => {
+  $('dot').className = 'status-dot';
+  $('status-text').textContent = 'Terputus';
+});
+sock.on('queue:all', (all) => {
+  currentQueues = all || {};
+  renderLiveGrid();
+});
+sock.on('queue', (e) => {
+  currentQueues[e.service] = e;
+  renderLiveGrid();
+});
+sock.on('queue:clear', (e) => {
+  if (e && e.service) delete currentQueues[e.service];
+  else currentQueues = {};
+  renderLiveGrid();
 });
 
+// API Calls
 async function send(body) {
-  const r = await fetch('/api/queue/call', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-api-key': $('k').value },
-    body: JSON.stringify(body),
-  });
-  $('m').textContent = r.ok ? `Dipanggil: ${body.prefix}${body.number}`
-    : r.status === 401 ? 'Kunci akses salah.' : 'Gagal memanggil. Periksa isian.';
-  return r.ok;
+  try {
+    const r = await fetch('/api/queue/call', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': $('k').value },
+      body: JSON.stringify(body),
+    });
+    if (r.ok) {
+      showToast(`Dipanggil: ${body.prefix}${body.number} (${serviceMap[body.service] || ''})`, 'success');
+      return true;
+    }
+    if (r.status === 401) {
+      showToast('Kunci akses (API Key) salah. Buka Pengaturan di bawah.', 'error');
+      $('settingsContent').style.display = 'block';
+      $('panelArrow').style.transform = 'rotate(180deg)';
+      $('k').focus();
+    } else {
+      showToast('Gagal memanggil antrian. Periksa isian.', 'error');
+    }
+  } catch (err) {
+    showToast('Koneksi ke server gagal.', 'error');
+  }
+  return false;
 }
 
 $('go').onclick = async () => {
-  last = { service: $('s').value, prefix: $('p').value, number: String($('n').value).padStart(3, '0') };
-  if (await send(last)) $('n').value = +$('n').value + 1;
+  const service = $('s').value;
+  if (!service) { showToast('Pilih layanan terlebih dahulu.', 'error'); return; }
+  const prefix = $('p').value;
+  const numVal = +$('n').value || 1;
+  const number = String(numVal).padStart(3, '0');
+  last = { service, prefix, number };
+  if (await send(last)) {
+    $('n').value = numVal + 1;
+  }
 };
-$('re').onclick = () => (last ? send(last) : ($('m').textContent = 'Belum ada panggilan sebelumnya.'));
+
+$('re').onclick = () => {
+  if (!last) {
+    showToast('Belum ada panggilan sebelumnya.', 'info');
+    return;
+  }
+  send(last);
+};
 
 $('clr').onclick = async () => {
-  if (!confirm('Kosongkan antrian untuk layanan terpilih?')) return;
-  const r = await fetch('/api/queue/clear', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-api-key': $('k').value },
-    body: JSON.stringify({ service: $('s').value }),
-  });
-  $('m').textContent = r.ok ? 'Antrian layanan berhasil dikosongkan.'
-    : r.status === 401 ? 'Kunci akses salah.' : 'Gagal mengosongkan antrian.';
+  const s = $('s').value;
+  const sName = serviceMap[s] || `Layanan ${s}`;
+  if (!confirm(`Kosongkan antrian untuk ${sName}?`)) return;
+  try {
+    const r = await fetch('/api/queue/clear', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': $('k').value },
+      body: JSON.stringify({ service: s }),
+    });
+    if (r.ok) showToast(`Antrian ${sName} berhasil dikosongkan.`, 'success');
+    else if (r.status === 401) showToast('Kunci akses salah.', 'error');
+    else showToast('Gagal mengosongkan antrian.', 'error');
+  } catch {
+    showToast('Koneksi ke server gagal.', 'error');
+  }
 };
 
 $('clr-all').onclick = async () => {
-  if (!confirm('Kosongkan antrian untuk SEMUA layanan?')) return;
-  const r = await fetch('/api/queue/clear', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-api-key': $('k').value },
-    body: JSON.stringify({}),
-  });
-  $('m').textContent = r.ok ? 'Semua antrian berhasil dikosongkan.'
-    : r.status === 401 ? 'Kunci akses salah.' : 'Gagal mengosongkan antrian.';
+  if (!confirm('Yakin ingin mengosongkan antrian di SEMUA layanan pada layar?')) return;
+  try {
+    const r = await fetch('/api/queue/clear', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': $('k').value },
+      body: JSON.stringify({}),
+    });
+    if (r.ok) showToast('Seluruh antrian berhasil dikosongkan.', 'success');
+    else if (r.status === 401) showToast('Kunci akses salah.', 'error');
+    else showToast('Gagal mengosongkan antrian.', 'error');
+  } catch {
+    showToast('Koneksi ke server gagal.', 'error');
+  }
 };
 </script>
 </body>
