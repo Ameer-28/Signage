@@ -33,6 +33,7 @@ Hasil edit CMS disimpan di `data/channel.json`. Hapus file itu untuk kembali ke 
 | PUT | /api/channel | ya | Simpan hasil edit dan publish ke semua player |
 | POST | /api/media | ya | Unggah gambar/video (field `file`) |
 | POST | /api/queue/call | ya | `{"service":1,"prefix":"A","number":"001"}` |
+| POST / DELETE | /api/queue/clear atau /api/queue | ya | Kosongkan antrian `{"service": 1}` atau `{}` (semua) |
 
 Kunci dikirim lewat header `x-api-key`.
 

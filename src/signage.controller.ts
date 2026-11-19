@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Post, Put, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Post, Put, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { join } from 'path';
@@ -75,5 +75,21 @@ export class SignageController {
     const entry = this.s.call(Number(b.service), String(b.prefix ?? ''), String(b.number));
     this.g.emit('queue', { service: Number(b.service), ...entry });
     return entry;
+  }
+
+  @Post('queue/clear')
+  @UseGuards(ApiKeyGuard)
+  clearQueue(@Body() b: any) {
+    const service = b?.service ? Number(b.service) : undefined;
+    const q = this.s.clear(service);
+    this.g.emit('queue:clear', { service });
+    this.g.emit('queue:all', q);
+    return { ok: true, queue: q };
+  }
+
+  @Delete('queue')
+  @UseGuards(ApiKeyGuard)
+  deleteQueue(@Body() b: any) {
+    return this.clearQueue(b);
   }
 }

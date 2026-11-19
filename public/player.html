@@ -152,7 +152,32 @@ addEventListener('resize', fit);
 fit();
 
 const sock = io();
-sock.on('queue:all', (all) => { state = all; for (const s in all) show(s, all[s], false); });
+sock.on('queue:all', (all) => {
+  state = all || {};
+  for (const s in slots) {
+    if (state[s]) {
+      show(s, state[s], false);
+    } else {
+      slots[s].p.textContent = '';
+      slots[s].n.textContent = '';
+    }
+  }
+});
+sock.on('queue:clear', (e) => {
+  if (e && e.service) {
+    delete state[e.service];
+    if (slots[e.service]) {
+      slots[e.service].p.textContent = '';
+      slots[e.service].n.textContent = '';
+    }
+  } else {
+    state = {};
+    for (const s in slots) {
+      slots[s].p.textContent = '';
+      slots[s].n.textContent = '';
+    }
+  }
+});
 sock.on('queue', (e) => { state[e.service] = e; show(e.service, e, true); });
 sock.on('publish', () => load().catch(() => {}));
 

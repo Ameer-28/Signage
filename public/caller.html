@@ -19,10 +19,16 @@
 <label for="n">Nomor</label><input id="n" type="number" min="0" value="1">
 <button id="go">Panggil</button>
 <button id="re">Panggil ulang</button>
+<button id="clr" style="background:#dc3545;color:#fff;border:none;">Kosongkan antrian layanan ini</button>
+<button id="clr-all" style="background:#6c757d;color:#fff;border:none;">Kosongkan semua antrian</button>
 <p id="m" role="status"></p>
 <script>
 const $ = (id) => document.getElementById(id);
 let last = null;
+
+const savedKey = localStorage.getItem('signage_api_key');
+if (savedKey) $('k').value = savedKey;
+$('k').addEventListener('input', () => localStorage.setItem('signage_api_key', $('k').value));
 
 fetch('/api/channel').then((r) => r.json()).then((ch) => {
   for (const b of ch.blocks) for (const i of b.items) {
@@ -46,6 +52,28 @@ $('go').onclick = async () => {
   if (await send(last)) $('n').value = +$('n').value + 1;
 };
 $('re').onclick = () => (last ? send(last) : ($('m').textContent = 'Belum ada panggilan sebelumnya.'));
+
+$('clr').onclick = async () => {
+  if (!confirm('Kosongkan antrian untuk layanan terpilih?')) return;
+  const r = await fetch('/api/queue/clear', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-api-key': $('k').value },
+    body: JSON.stringify({ service: $('s').value }),
+  });
+  $('m').textContent = r.ok ? 'Antrian layanan berhasil dikosongkan.'
+    : r.status === 401 ? 'Kunci akses salah.' : 'Gagal mengosongkan antrian.';
+};
+
+$('clr-all').onclick = async () => {
+  if (!confirm('Kosongkan antrian untuk SEMUA layanan?')) return;
+  const r = await fetch('/api/queue/clear', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-api-key': $('k').value },
+    body: JSON.stringify({}),
+  });
+  $('m').textContent = r.ok ? 'Semua antrian berhasil dikosongkan.'
+    : r.status === 401 ? 'Kunci akses salah.' : 'Gagal mengosongkan antrian.';
+};
 </script>
 </body>
 </html>

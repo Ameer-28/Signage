@@ -78,4 +78,13 @@ export class SignageService implements OnModuleInit {
   call(service: number, prefix: string, number: string) {
     return (this.queue[service] = { prefix, number, at: Date.now() });
   }
+
+  clear(service?: number) {
+    if (service) {
+      delete this.queue[service];
+    } else {
+      this.queue = {};
+    }
+    return this.queue;
+  }
 }
