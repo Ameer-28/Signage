@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panggil antrian</title>
+<style>
+  body { font: 16px system-ui, sans-serif; max-width: 420px; margin: 32px auto; padding: 0 16px; }
+  label { display: block; margin: 14px 0 4px; }
+  input, select, button { font: inherit; padding: 10px; width: 100%; box-sizing: border-box; }
+  button { margin-top: 14px; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>Panggil antrian</h1>
+<label for="k">Kunci akses</label><input id="k" type="password" autocomplete="off">
+<label for="s">Layanan</label><select id="s"></select>
+<label for="p">Huruf awalan</label><input id="p" maxlength="2" value="A">
+<label for="n">Nomor</label><input id="n" type="number" min="0" value="1">
+<button id="go">Panggil</button>
+<button id="re">Panggil ulang</button>
+<p id="m" role="status"></p>
+<script>
+const $ = (id) => document.getElementById(id);
+let last = null;
+
+fetch('/api/channel').then((r) => r.json()).then((ch) => {
+  for (const b of ch.blocks) for (const i of b.items) {
+    if (i.type === 'queueview' && i.text_service_id) $('s').add(new Option(i.text_service_id, i.service));
+  }
+});
+
+async function send(body) {
+  const r = await fetch('/api/queue/call', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-api-key': $('k').value },
+    body: JSON.stringify(body),
+  });
+  $('m').textContent = r.ok ? `Dipanggil: ${body.prefix}${body.number}`
+    : r.status === 401 ? 'Kunci akses salah.' : 'Gagal memanggil. Periksa isian.';
+  return r.ok;
+}
+
+$('go').onclick = async () => {
+  last = { service: $('s').value, prefix: $('p').value, number: String($('n').value).padStart(3, '0') };
+  if (await send(last)) $('n').value = +$('n').value + 1;
+};
+$('re').onclick = () => (last ? send(last) : ($('m').textContent = 'Belum ada panggilan sebelumnya.'));
+</script>
+</body>
+</html>

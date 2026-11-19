@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CMS</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 16px system-ui, sans-serif; max-width: 760px; margin: 24px auto; padding: 0 16px; }
+  section { border: 1px solid color-mix(in srgb, currentColor 25%, transparent); border-radius: 10px; padding: 4px 16px 16px; margin: 16px 0; }
+  ul { list-style: none; padding: 0; margin: 0 0 12px; }
+  li { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 8px 0; border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent); }
+  .thumb { width: 96px; height: 54px; object-fit: cover; border-radius: 4px; background: #888; }
+  .name { flex: 1; min-width: 120px; overflow-wrap: anywhere; }
+  input, textarea, button { font: inherit; padding: 8px; box-sizing: border-box; }
+  input[type=number] { width: 72px; }
+  textarea { width: 100%; }
+  .bar { position: sticky; bottom: 0; display: flex; align-items: center; gap: 12px; padding: 12px 0; background: Canvas; }
+  #stage { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #222 center / cover; overflow: hidden; touch-action: none; user-select: none; }
+  .blk { position: absolute; box-sizing: border-box; border: 2px solid #fff9; background: #0007 center / 100% 100% no-repeat; color: #fff; font-size: 12px; cursor: move; }
+  .blk.on { outline: 3px solid #4af; z-index: 5; }
+  .blk span { position: absolute; left: 0; top: 0; padding: 1px 4px; background: #000b; }
+  .blk i { position: absolute; right: 0; bottom: 0; width: 16px; height: 16px; background: #4af; cursor: nwse-resize; }
+  .lay label { display: inline-block; margin: 4px 8px 4px 0; }
+</style>
+</head>
+<body>
+<h1>CMS</h1>
+<div id="login">
+  <label for="k">Kunci akses</label>
+  <input id="k" type="password" autocomplete="off">
+  <button id="in">Masuk</button>
+  <p id="lmsg" role="status"></p>
+</div>
+<main id="app" hidden>
+  <section class="lay">
+    <h2>Layout layar</h2>
+    <div id="stage" aria-label="Pratinjau layout layar"></div>
+    <p>
+      <label>Blok <select id="sel"></select></label>
+      <label>X <input id="fx" type="number"></label>
+      <label>Y <input id="fy" type="number"></label>
+      <label>Lebar <input id="fw" type="number"></label>
+      <label>Tinggi <input id="fh" type="number"></label>
+    </p>
+    <p>
+      <label>Latar layar
+        <select id="bgsel">
+          <option value="asli">Template asli (dengan bingkai)</option>
+          <option value="polos">Polos (tanpa bingkai)</option>
+          <option value="sendiri" disabled>Gambar sendiri</option>
+        </select>
+      </label>
+      <label>Unggah latar sendiri (1920×1080) <input id="bgf" type="file" accept="image/*"></label>
+    </p>
+    <p>
+      <label><input id="snap" type="checkbox" checked> Tempel ke grid 10 px</label>
+      <button id="rl">Kembalikan layout awal</button>
+      <a href="/player.html" target="_blank">Lihat player</a>
+    </p>
+    <p>Seret blok untuk memindah. Seret kotak biru di sudut kanan bawah untuk mengubah ukuran. Tombol panah menggeser 10 px (Shift: 1 px). Blok antrian, jam, dan kotak info ukurannya terkunci proporsional. Klik Publish untuk menayangkan.</p>
+  </section>
+  <div id="zones"></div>
+  <section>
+    <h2>Teks berjalan</h2>
+    <label for="t">Satu pesan per baris</label>
+    <textarea id="t" rows="5"></textarea>
+  </section>
+  <div class="bar">
+    <button id="pub">Publish</button>
+    <button id="rev">Batalkan perubahan</button>
+    <span id="msg" role="status"></span>
+  </div>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+const NAMES = { Video: 'Iklan utama (besar, tengah)', Slide: 'Iklan kecil (kiri bawah)' };
+const isSlide = (i) => i.type === 'image' || i.type === 'video';
+let ch = null, key = sessionStorage.getItem('key') || '';
+const msg = (t) => { $('#msg').textContent = t; };
+
+async function load() {
+  ch = await (await fetch('/api/channel')).json();
+  for (const b of ch.blocks) b.orig ??= { x: b.x, y: b.y, w: b.w, h: b.h };
+  for (const b of ch.blocks) if (b.playlist) { b.slides = b.items.filter(isSlide); b.rest = b.items.filter((i) => !isSlide(i)); }
+  const z = $('#zones');
+  z.replaceChildren();
+  for (const b of ch.blocks) if (b.playlist) z.append(zone(b));
+  stageDraw();
+  $('#t').value = (ch.blocks.flatMap((b) => b.items).find((i) => i.type === 'newsticker')?.lines ?? []).join('\n');
+}
+
+function zone(b) {
+  const box = document.createElement('section');
+  box.innerHTML = '<h2></h2><ul></ul><label>Tambah gambar atau video <input type="file" accept="image/*,video/mp4,video/webm" multiple></label>';
+  box.querySelector('h2').textContent = `${NAMES[b.id] ?? b.id} (${b.w}×${b.h})`;
+  const ul = box.querySelector('ul');
+  const draw = () => {
+    ul.replaceChildren();
+    b.slides.forEach((it, n) => ul.append(row(b, it, n, draw)));
+    if (!b.slides.length) ul.append(Object.assign(document.createElement('li'), { textContent: 'Belum ada isi.' }));
+  };
+  box.querySelector('input').onchange = async (e) => {
+    for (const f of e.target.files) {
+      msg(`Mengunggah ${f.name}...`);
+      const fd = new FormData();
+      fd.append('file', f);
+      const r = await fetch('/api/media', { method: 'POST', headers: { 'x-api-key': key }, body: fd });
+      if (!r.ok) { msg(r.status === 401 ? 'Kunci akses salah.' : `${f.name} ditolak. Gunakan jpg, png, gif, webp, mp4, atau webm.`); continue; }
+      const m = await r.json();
+      b.slides.push({ type: m.type, src: m.src, seconds: m.type === 'video' ? 0 : 15 });
+      msg('Unggahan selesai. Klik Publish untuk menayangkan.');
+    }
+    e.target.value = '';
+    draw();
+  };
+  draw();
+  return box;
+}
+
+function row(b, it, n, draw) {
+  const li = document.createElement('li');
+  const th = document.createElement(it.type === 'video' ? 'video' : 'img');
+  th.className = 'thumb';
+  th.src = it.src;
+  if (it.type === 'video') th.muted = true;
+  const nm = document.createElement('span');
+  nm.className = 'name';
+  nm.textContent = decodeURIComponent(it.src.split('/').pop());
+  const sec = document.createElement('input');
+  sec.type = 'number';
+  sec.min = 0;
+  sec.value = it.seconds;
+  sec.setAttribute('aria-label', 'Durasi dalam detik');
+  sec.title = it.type === 'video' ? 'Detik. 0 = putar sampai selesai' : 'Lama tampil (detik)';
+  sec.oninput = () => { it.seconds = Math.max(0, +sec.value || 0); };
+  const btn = (t, label, f) => {
+    const x = document.createElement('button');
+    x.textContent = t;
+    x.setAttribute('aria-label', label);
+    x.onclick = f;
+    return x;
+  };
+  const move = (d) => { b.slides.splice(n + d, 0, b.slides.splice(n, 1)[0]); draw(); };
+  li.append(th, nm, sec, 'detik',
+    btn('↑', 'Naikkan', () => n > 0 && move(-1)),
+    btn('↓', 'Turunkan', () => n < b.slides.length - 1 && move(1)),
+    btn('Hapus', 'Hapus dari daftar', () => { b.slides.splice(n, 1); draw(); }));
+  return li;
+}
+
+const LBL = { DateTime: 'Tanggal dan jam', RText: 'Teks berjalan', Video: 'Iklan utama', Slide: 'Iklan kecil', Tabel: 'Kotak info' };
+const label = (b) => LBL[b.id] ?? b.id.replace(/^Antrian(\d)$/, 'Antrian $1');
+const ed = () => ch.blocks.filter((b) => b.id !== 'BackGround');
+const keepRatio = (b) => b.items.some((i) => ['queueview', 'datetime', 'bgimage'].includes(i.type));
+const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+const BGS = { asli: '/media/BG.jpg', polos: '/media/BG_polos.jpg' };
+const bgItem = () => ch.blocks.find((b) => b.id === 'BackGround')?.items.find((i) => i.type === 'bgimage');
+const bgMode = () => Object.keys(BGS).find((k) => BGS[k] === bgItem()?.src) ?? 'sendiri';
+function paintBg() {
+  const m = bgMode();
+  $('#stage').style.backgroundImage = bgItem() ? `url("${bgItem().src}")` : '';
+  $('#bgsel').value = m;
+  $('#bgsel').options[2].disabled = m !== 'sendiri';
+}
+const els = new Map();
+let sel = null;
+
+function stageDraw() {
+  const st = $('#stage');
+  st.replaceChildren();
+  els.clear();
+  $('#sel').replaceChildren();
+  paintBg();
+  ed().forEach((b, n) => {
+    const d = document.createElement('div');
+    d.className = 'blk';
+    d.tabIndex = 0;
+    const pic = b.items.find((i) => i.src && i.type !== 'video');
+    if (pic) d.style.backgroundImage = `url("${pic.src}")`;
+    d.innerHTML = '<span></span><i></i>';
+    d.firstChild.textContent = label(b);
+    d.addEventListener('pointerdown', (e) => grab(e, b, e.target.tagName === 'I'));
+    d.onkeydown = (e) => nudge(e, b);
+    d.onfocus = () => choose(b);
+    st.append(d);
+    els.set(b, d);
+    $('#sel').add(new Option(label(b), n));
+    place(b);
+  });
+  choose(sel && ed().includes(sel) ? sel : ed()[0]);
+}
+
+function place(b) {
+  Object.assign(els.get(b).style, { left: b.x / 19.2 + '%', top: b.y / 10.8 + '%', width: b.w / 19.2 + '%', height: b.h / 10.8 + '%' });
+  if (b === sel) fields();
+}
+
+function choose(b) {
+  sel = b;
+  for (const [k, d] of els) d.classList.toggle('on', k === b);
+  fields();
+}
+
+function fields() {
+  $('#sel').value = ed().indexOf(sel);
+  for (const k of ['x', 'y', 'w', 'h']) $('#f' + k).value = sel ? Math.round(sel[k]) : '';
+  $('#fh').readOnly = !!sel && keepRatio(sel);
+}
+
+function setBox(b, v, exact) {
+  const g = !exact && $('#snap').checked ? 10 : 1;
+  const r = (n) => Math.round(n / g) * g;
+  let { x, y, w, h } = { ...b, ...Object.fromEntries(Object.entries(v).map(([k, n]) => [k, r(n)])) };
+  w = clamp(w, 40, 1920);
+  h = keepRatio(b) ? Math.round((w * b.orig.h) / b.orig.w) : clamp(h, 20, 1080);
+  x = Math.max(0, Math.min(1920 - w, x));
+  y = Math.max(0, Math.min(1080 - h, y));
+  const prev = [b.x, b.y, b.w, b.h].join();
+  Object.assign(b, { x, y, w, h });
+  place(b);
+  if (prev !== [x, y, w, h].join() && bgMode() === 'asli') {
+    bgItem().src = BGS.polos;
+    paintBg();
+    msg('Latar diganti ke Polos karena bingkai template asli tidak ikut berpindah. Bisa diubah di pilihan Latar layar. Klik Publish untuk menayangkan.');
+  } else msg('Layout diubah. Klik Publish untuk menayangkan.');
+}
+
+function grab(e, b, resize) {
+  e.preventDefault();
+  choose(b);
+  const d = els.get(b);
+  const k = 1920 / $('#stage').clientWidth;
+  const s = { px: e.clientX, py: e.clientY, x: b.x, y: b.y, w: b.w, h: b.h };
+  if (d.setPointerCapture) d.setPointerCapture(e.pointerId);
+  const move = (m) => {
+    const dx = (m.clientX - s.px) * k, dy = (m.clientY - s.py) * k;
+    if (!resize) setBox(b, { x: s.x + dx, y: s.y + dy });
+    else if (keepRatio(b)) setBox(b, { w: s.w + dx });
+    else setBox(b, { w: s.w + dx, h: s.h + dy });
+  };
+  const up = () => { d.removeEventListener('pointermove', move); d.removeEventListener('pointerup', up); };
+  d.addEventListener('pointermove', move);
+  d.addEventListener('pointerup', up);
+}
+
+function nudge(e, b) {
+  const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+  if (!d) return;
+  e.preventDefault();
+  const s = e.shiftKey ? 1 : 10;
+  setBox(b, { x: b.x + d[0] * s, y: b.y + d[1] * s }, true);
+}
+
+['x', 'y', 'w', 'h'].forEach((k) => { $('#f' + k).onchange = (e) => { if (sel) setBox(sel, { [k]: +e.target.value || 0 }, true); }; });
+$('#sel').onchange = () => choose(ed()[+$('#sel').value]);
+$('#rl').onclick = () => {
+  for (const b of ed()) Object.assign(b, b.orig);
+  if (bgMode() === 'polos') bgItem().src = BGS.asli;
+  stageDraw();
+  msg('Layout dan latar dikembalikan ke awal. Klik Publish untuk menayangkan.');
+};
+$('#bgsel').onchange = (e) => {
+  if (!BGS[e.target.value] || !bgItem()) return;
+  bgItem().src = BGS[e.target.value];
+  paintBg();
+  msg('Latar diganti. Klik Publish untuk menayangkan.');
+};
+$('#bgf').onchange = async (e) => {
+  const f = e.target.files[0];
+  if (!f || !bgItem()) return;
+  msg(`Mengunggah ${f.name}...`);
+  const fd = new FormData();
+  fd.append('file', f);
+  const r = await fetch('/api/media', { method: 'POST', headers: { 'x-api-key': key }, body: fd });
+  const m = r.ok ? await r.json() : null;
+  if (!m || m.type !== 'image') { msg(r.status === 401 ? 'Kunci akses salah.' : 'Latar harus berupa gambar (jpg, png, gif, atau webp).'); return; }
+  bgItem().src = m.src;
+  paintBg();
+  e.target.value = '';
+  msg('Latar diganti. Klik Publish untuk menayangkan.');
+};
+
+function payload() {
+  const lines = $('#t').value.split('\n').map((s) => s.trim()).filter(Boolean);
+  return {
+    ...ch,
+    blocks: ch.blocks.map(({ slides, rest, ...b }) => ({
+      ...b,
+      items: (slides ? [...rest, ...slides] : b.items).map((i) => (i.type === 'newsticker' ? { ...i, lines } : i)),
+    })),
+  };
+}
+
+$('#pub').onclick = async () => {
+  const r = await fetch('/api/channel', {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json', 'x-api-key': key },
+    body: JSON.stringify(payload()),
+  });
+  if (!r.ok) { msg(r.status === 401 ? 'Kunci akses salah.' : 'Gagal publish. Periksa isian.'); return; }
+  await load();
+  msg('Berhasil dipublish. Semua layar akan berubah dalam beberapa detik.');
+};
+$('#rev').onclick = async () => { await load(); msg('Perubahan dibatalkan.'); };
+
+async function login() {
+  key = $('#k').value;
+  const r = await fetch('/api/auth', { headers: { 'x-api-key': key } });
+  if (!r.ok) { $('#lmsg').textContent = 'Kunci akses salah.'; return; }
+  sessionStorage.setItem('key', key);
+  $('#login').hidden = true;
+  $('#app').hidden = false;
+  await load();
+}
+$('#in').onclick = login;
+$('#k').onkeydown = (e) => { if (e.key === 'Enter') login(); };
+if (key) { $('#k').value = key; login(); }
+</script>
+</body>
+</html>

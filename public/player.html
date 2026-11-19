@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Player</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; cursor: none; }
+  #stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; color: #fff; }
+  .b { position: absolute; overflow: hidden; }
+  .t { position: absolute; display: flex; align-items: center; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const stage = document.getElementById('stage');
+const CG = "'Century Gothic','Segoe UI',Arial,sans-serif";
+const NUM = "Arial,'Segoe UI',sans-serif";
+const AL = { taLeftJustify: 'flex-start', taCenter: 'center', taRightJustify: 'flex-end' };
+let timers = [], slots = {}, state = {};
+
+const el = (cls, css = {}, text) => {
+  const e = document.createElement('div');
+  e.className = cls;
+  Object.assign(e.style, css);
+  if (text != null) e.textContent = text;
+  return e;
+};
+const img = (box, src) => {
+  const i = new Image();
+  i.src = src;
+  i.style.cssText = 'position:absolute;inset:0;width:100%;height:100%';
+  box.append(i);
+  return i;
+};
+// Ukuran font di XML lama dalam point (Delphi), CSS memakai px.
+const text = (box, o, t = '') => {
+  const e = el('t', {
+    left: o.left + 'px', top: o.top + 'px', width: o.width + 'px', height: o.height + 'px',
+    font: `${o.bold ? 'bold ' : ''}${(o.size * 4) / 3}px ${o.family}`,
+    color: o.color, justifyContent: o.align,
+  }, t);
+  box.append(e);
+  return e;
+};
+
+function slideshow(box, items) {
+  let n = 0;
+  const next = () => {
+    const it = items[n++ % items.length];
+    const v = it.type === 'video';
+    const e = v ? document.createElement('video') : new Image();
+    e.className = 's';
+    e.style.cssText = 'position:absolute;inset:0;width:100%;height:100%';
+    e.src = it.src;
+    if (v) Object.assign(e, { muted: true, autoplay: true, playsInline: true });
+    const old = box.querySelector('.s');
+    box.append(e);
+    if (old) old.remove();
+    if (items.length === 1) { if (v) e.loop = true; return; }
+    if (v && !it.seconds) {
+      e.onended = next;
+      e.onerror = () => timers.push(setTimeout(next, 3000));
+    } else timers.push(setTimeout(next, (it.seconds || 15) * 1000));
+  };
+  next();
+}
+
+function clock(box, a) {
+  img(box, a.src);
+  const mk = (s, family) => text(box, {
+    left: +a['left' + s], top: +a['top' + s], width: +a['width' + s], height: +a['height' + s],
+    size: +a['size' + s], bold: /Bold/.test(a['style' + s]), color: a['font_color' + s],
+    align: AL[a['aligment_font' + s]], family,
+  });
+  const date = mk('', CG), time = mk('_2', NUM), day = mk('_3', CG);
+  const tick = () => {
+    const n = new Date();
+    date.textContent = n.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }).replaceAll('/', '-');
+    time.textContent = n.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).replace('.', ':');
+    day.textContent = n.toLocaleDateString('id-ID', { weekday: 'long' });
+  };
+  tick();
+  timers.push(setInterval(tick, 1000));
+}
+
+function ticker(box, a, b) {
+  box.style.background = a.bg_color;
+  const s = el('t', { font: `${((a.size * 4) / 3) * (b.h / (b.orig?.h ?? b.h))}px ${CG}`, color: a.color, height: '100%' }, (a.lines ?? []).join('      •      '));
+  box.append(s);
+  const w = s.offsetWidth;
+  s.animate(
+    [{ transform: `translateX(${b.w}px)` }, { transform: `translateX(${-w}px)` }],
+    { duration: (w + b.w) / 0.1, iterations: Infinity },
+  );
+}
+
+function queue(box, a) {
+  img(box, a.src);
+  const slot = (k, o, t = '') => text(box, {
+    left: +a[`queue_${k}_left`], top: +a[`queue_${k}_top`],
+    width: +a[`queue_${k}_width`], height: +a[`queue_${k}_height`], ...o,
+  }, t);
+  slot('s', { size: +a.size_s, bold: true, color: a.font_color_s, align: 'flex-start', family: CG }, a.text_service_id);
+  slot('c', { size: +a.size_c, color: a.font_color_c, align: 'flex-start', family: NUM }, a.text_counter_id);
+  const p = slot('a', { size: +a.size_a, color: a.font_color_a, align: AL[a.aligment_font_a], family: NUM });
+  const n = slot('n', { size: +a.size, color: a.font_color, align: AL[a.aligment_font], family: NUM });
+  slots[a.service] = { box, p, n };
+}
+
+function show(service, e, flash) {
+  const s = slots[service];
+  if (!s) return;
+  s.p.textContent = e.prefix;
+  s.n.textContent = e.number;
+  if (flash) s.box.animate([{ filter: 'none' }, { filter: 'brightness(1.5)' }, { filter: 'none' }], { duration: 700, iterations: 4 });
+}
+
+async function load() {
+  const ch = await (await fetch('/api/channel')).json();
+  timers.forEach((t) => { clearTimeout(t); clearInterval(t); });
+  timers = []; slots = {};
+  stage.replaceChildren();
+  for (const b of ch.blocks) {
+    const box = el('b', { left: b.x + 'px', top: b.y + 'px', width: b.w + 'px', height: b.h + 'px' });
+    stage.append(box);
+    const o = b.orig ?? b;
+    let host = box;
+    if (b.items.some((i) => i.type === 'queueview' || i.type === 'datetime')) {
+      host = el('', { left: '0px', top: '0px', width: o.w + 'px', height: o.h + 'px', position: 'absolute', transformOrigin: '0 0', transform: `scale(${b.w / o.w})` });
+      box.append(host);
+    }
+    const pics = b.items.filter((i) => i.type === 'image' || i.type === 'video');
+    if (pics.length) slideshow(box, pics);
+    for (const it of b.items) {
+      if (it.type === 'bgimage') img(box, it.src);
+      if (it.type === 'datetime') clock(host, it);
+      if (it.type === 'newsticker') ticker(box, it, b);
+      if (it.type === 'queueview') queue(host, it);
+    }
+  }
+  for (const s in state) show(s, state[s], false);
+}
+
+function fit() {
+  const k = Math.min(innerWidth / 1920, innerHeight / 1080);
+  stage.style.transform = `translate(${(innerWidth - 1920 * k) / 2}px,${(innerHeight - 1080 * k) / 2}px) scale(${k})`;
+}
+addEventListener('resize', fit);
+fit();
+
+const sock = io();
+sock.on('queue:all', (all) => { state = all; for (const s in all) show(s, all[s], false); });
+sock.on('queue', (e) => { state[e.service] = e; show(e.service, e, true); });
+sock.on('publish', () => load().catch(() => {}));
+
+const start = () => load().catch(() => setTimeout(start, 5000));
+start();
+</script>
+</body>
+</html>
